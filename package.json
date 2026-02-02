@@ -5,10 +5,10 @@
   "license": "ISC",
   "author": "sachin saroj",
   "type": "module",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
