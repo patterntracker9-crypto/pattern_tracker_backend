@@ -10,7 +10,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: "https://patterntracker.netlify.app",
     credentials: true,
   })
 );
@@ -24,3 +24,4 @@ app.use('/api/v1/pattern', patternRoutes);
 app.use(globalErrorHandler);
 
 export { app };
+
