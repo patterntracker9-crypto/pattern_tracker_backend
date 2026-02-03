@@ -7,16 +7,9 @@ import cors from 'cors';
 import { globalErrorHandler } from './middlewares/globalErrorHandler.middleware.js';
 
 const app = express();
-// app.use(
-//   cors({
-//     origin: "https://patterntracker.netlify.app",
-//     credentials: true,
-//      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-//     allowedHeaders: ['Content-Type', 'Authorization'],
-//   })
-// );
+
 const corsOptions = {
-  origin: "https://patterntracker.netlify.app" || "*", //  Frontend origin
+  origin: "https://patterntracker.netlify.app", //  Frontend origin
   credentials: true, // Allow credentials (cookies)
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -33,6 +26,7 @@ app.use('/api/v1/pattern', patternRoutes);
 app.use(globalErrorHandler);
 
 export { app };
+
 
 
 
