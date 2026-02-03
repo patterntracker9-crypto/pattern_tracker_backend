@@ -12,6 +12,8 @@ app.use(
   cors({
     origin: "https://patterntracker.netlify.app",
     credentials: true,
+     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 app.use(express.json());
@@ -24,4 +26,5 @@ app.use('/api/v1/pattern', patternRoutes);
 app.use(globalErrorHandler);
 
 export { app };
+
 
