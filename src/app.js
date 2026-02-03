@@ -16,7 +16,7 @@ const app = express();
 //   })
 // );
 const corsOptions = {
-  origin: "*", //  Frontend origin
+  origin: "https://patterntracker.netlify.app" || "*", //  Frontend origin
   credentials: true, // Allow credentials (cookies)
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -33,6 +33,7 @@ app.use('/api/v1/pattern', patternRoutes);
 app.use(globalErrorHandler);
 
 export { app };
+
 
 
 
