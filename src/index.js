@@ -7,3 +7,4 @@ connectDB().then(() => {
     console.log(`SERVER IS FUNNING ON ${port} number.`);
   });
 });
+
