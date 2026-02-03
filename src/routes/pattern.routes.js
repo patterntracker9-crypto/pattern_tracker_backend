@@ -10,7 +10,7 @@ import { verifyJWT } from '../middlewares/verifyJWT.js';
 const router = express.Router();
 
 router.post('/sync', verifyJWT, authorizedRoles('admin'), syncPatternsFromSheet);
-router.get('/', verifyJWT, fetchPatterns);
+router.get('/', fetchPatterns);
 router.put(
   '/:pattern_number',
   verifyJWT,
@@ -19,3 +19,4 @@ router.put(
 );
 
 export default router;
+
