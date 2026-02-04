@@ -101,4 +101,137 @@ const updatePatternByNumber = async (pattern_number, sizesToUpdate) => {
   return updatedPatterns.length === 1 ? updatedPatterns[0] : updatedPatterns;
 };
 
-export { bulkSyncPatterns, getPatterns, updatePatternByNumber };
+const getUniquePatterns = async (query) => {
+  let { page = 1, limit = 10, style_number, pattern_number } = query;
+
+  page = parseInt(page);
+  limit = parseInt(limit);
+
+  const matchStage = {};
+
+  // optional filter
+  if (style_number) {
+    const styleNum = parseInt(style_number);
+    if (!isNaN(styleNum)) {
+      matchStage.style_number = styleNum;
+    }
+  }
+
+  if (pattern_number) {
+    // Exact match for pattern_number
+    matchStage.pattern_number = pattern_number;
+  }
+
+  const pipeline = [
+    { $match: matchStage },
+
+    // group by pattern_number (UNIQUE)
+    {
+      $group: {
+        _id: '$pattern_number',
+        pattern: { $first: '$$ROOT' },
+      },
+    },
+
+    // replace root so output looks clean
+    {
+      $replaceRoot: { newRoot: '$pattern' },
+    },
+
+    // sorting
+    {
+      $sort: { style_number: 1, pattern_number: 1 },
+    },
+
+    // pagination
+    {
+      $facet: {
+        data: [{ $skip: (page - 1) * limit }, { $limit: limit }],
+        totalCount: [{ $count: 'count' }],
+      },
+    },
+  ];
+
+  const result = await Pattern.aggregate(pipeline);
+
+  const patterns = result[0].data;
+  const total = result[0].totalCount[0]?.count || 0;
+
+  return {
+    patterns,
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+  };
+};
+
+const getUniquePatternsWithIncompleteSizes = async (query) => {
+  let { style_number } = query;
+
+  const matchStage = {};
+
+  // optional filter
+  if (style_number) {
+    const styleNum = parseInt(style_number);
+    if (!isNaN(styleNum)) {
+      matchStage.style_number = styleNum;
+    }
+  }
+
+  const pipeline = [
+    { $match: matchStage },
+
+    // keep only incomplete sizes
+    {
+      $addFields: {
+        sizes: {
+          $filter: {
+            input: '$sizes',
+            as: 'size',
+            cond: { $eq: ['$$size.completed', false] },
+          },
+        },
+      },
+    },
+
+    // remove patterns where no incomplete sizes exist
+    {
+      $match: {
+        'sizes.0': { $exists: true },
+      },
+    },
+
+    // UNIQUE by pattern_number
+    {
+      $group: {
+        _id: '$pattern_number',
+        pattern: { $first: '$$ROOT' },
+      },
+    },
+
+    {
+      $replaceRoot: { newRoot: '$pattern' },
+    },
+
+    // sorting
+    {
+      $sort: { style_number: 1, pattern_number: 1 },
+    },
+  ];
+
+  const patterns = await Pattern.aggregate(pipeline);
+
+  return {
+    patterns,
+    total: patterns.length,
+  };
+};
+
+export {
+  bulkSyncPatterns,
+  getPatterns,
+  updatePatternByNumber,
+  getUniquePatterns,
+  getUniquePatternsWithIncompleteSizes,
+};

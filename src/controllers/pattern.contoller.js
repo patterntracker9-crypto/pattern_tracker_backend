@@ -1,4 +1,8 @@
-import { bulkSyncPatterns } from '../services/pattern.service.js';
+import {
+  bulkSyncPatterns,
+  getUniquePatterns,
+  getUniquePatternsWithIncompleteSizes,
+} from '../services/pattern.service.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getPatterns, updatePatternByNumber } from '../services/pattern.service.js';
@@ -28,6 +32,18 @@ const fetchPatterns = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse('Patterns fetched successfully', result, 200));
 });
 
+const uniquePatterns = asyncHandler(async (req, res) => {
+  const result = await getUniquePatterns(req.query);
+  res.status(200).json(new ApiResponse('Unique Patterns fetched successfully', result, 200));
+});
+
+const notCompletedPatterns = asyncHandler(async (req, res) => {
+  const result = await getUniquePatternsWithIncompleteSizes(req.query);
+  res
+    .status(200)
+    .json(new ApiResponse('Not completed Patterns list fetched successfully', result, 200));
+});
+
 const updatePatternSizes = asyncHandler(async (req, res) => {
   const { pattern_number } = req.params;
   const { sizes } = req.body; // [{ name: "M", completed: true }, { name: "L", completed: true }]
@@ -37,4 +53,10 @@ const updatePatternSizes = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse('Pattern sizes updated successfully', updatedPattern, 200));
 });
 
-export { syncPatternsFromSheet, fetchPatterns, updatePatternSizes };
+export {
+  syncPatternsFromSheet,
+  fetchPatterns,
+  updatePatternSizes,
+  uniquePatterns,
+  notCompletedPatterns,
+};

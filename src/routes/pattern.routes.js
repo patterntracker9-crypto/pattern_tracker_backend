@@ -2,10 +2,11 @@ import express from 'express';
 import { authorizedRoles } from '../middlewares/roleBaseAccess.middleware.js';
 import {
   fetchPatterns,
+  notCompletedPatterns,
   syncPatternsFromSheet,
+  uniquePatterns,
   updatePatternSizes,
 } from '../controllers/pattern.contoller.js';
-import { verifyJWT } from '../middlewares/verifyJWT.js';
 
 const router = express.Router();
 
@@ -19,6 +20,8 @@ router.get('/', fetchPatterns);
 //   updatePatternSizes
 // );
 
+router.get('/list', uniquePatterns);
+router.get('/pending', notCompletedPatterns);
 router.put('/:pattern_number', updatePatternSizes);
 
 export default router;
