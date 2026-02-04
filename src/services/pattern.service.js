@@ -1,3 +1,4 @@
+import mongoose, { Types } from 'mongoose';
 import { Pattern } from '../models/pattern.model.js';
 
 const bulkSyncPatterns = async (patternsData) => {
@@ -27,31 +28,6 @@ const bulkSyncPatterns = async (patternsData) => {
   return result;
 };
 
-// const getPatterns = async (query) => {
-//   let { page = 1, limit = 10, style_number, pattern_number } = query;
-//   page = parseInt(page);
-//   limit = parseInt(limit);
-
-//   const filter = {};
-//   if (style_number) filter.style_number = style_number;
-//   if (pattern_number) filter.pattern_number = { $regex: pattern_number, $options: 'i' };
-
-//   const total = await Pattern.countDocuments(filter);
-
-//   const patterns = await Pattern.find(filter)
-//     .skip((page - 1) * limit)
-//     .limit(limit)
-//     .sort({ style_number: 1, pattern_number: 1 });
-
-//   return {
-//     patterns,
-//     page,
-//     limit,
-//     total,
-//     totalPages: Math.ceil(total / limit),
-//   };
-// };
-
 const getPatterns = async (query) => {
   let { page = 1, limit = 10, style_number, pattern_number } = query;
   page = parseInt(page);
@@ -60,10 +36,14 @@ const getPatterns = async (query) => {
   const filter = {};
 
   if (style_number) {
-    filter.style_number = { $regex: style_number, $options: 'i' };
+    const styleNum = parseInt(style_number);
+    if (!isNaN(styleNum)) {
+      filter.style_number = styleNum;
+    }
   }
 
   if (pattern_number) {
+    // Exact match for pattern_number
     filter.pattern_number = pattern_number;
   }
 
@@ -82,7 +62,6 @@ const getPatterns = async (query) => {
     totalPages: Math.ceil(total / limit),
   };
 };
-
 const updatePatternByNumber = async (pattern_number, sizesToUpdate) => {
   // Find ALL patterns with the same pattern_number
   const patterns = await Pattern.find({ pattern_number });
