@@ -5,7 +5,7 @@ import {
 } from '../services/pattern.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getPatterns, updatePatternByNumber } from '../services/pattern.service.js';
-import { ApiResponse } from '../utils/apiResponse.js';
+import { ApiResponse } from '../utils/ApiResponse.js';
 const syncPatternsFromSheet = asyncHandler(async (req, res) => {
   const { patterns } = req.body;
 
