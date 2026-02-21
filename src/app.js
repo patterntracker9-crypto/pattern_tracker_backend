@@ -16,7 +16,7 @@ const corsOptions = {
       'http://localhost:5173',
       'http://localhost:5174',
       'https://productfinderdashboard.netlify.app',
-      'https://whatisproduct.netlify.app,
+      'https://whatisproduct.netlify.app',
       '*',
       // For local development
     ];
@@ -61,5 +61,6 @@ app.use('/api/v1/products', productRoutes);
 app.use(globalErrorHandler);
 
 export { app };
+
 
 
