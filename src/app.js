@@ -1,7 +1,7 @@
 import express from 'express';
 import 'dotenv/config';
 import cookieParser from 'cookie-parser';
-// import authRoutes from './routes/auth.routes.js';
+import authRoutes from './routes/auth.routes.js';
 import patternRoutes from '../src/routes/pattern.routes.js';
 import productRoutes from './routes/product.route.js';
 import cors from 'cors';
@@ -59,3 +59,4 @@ app.use('/api/v1/products', productRoutes);
 app.use(globalErrorHandler);
 
 export { app };
+
