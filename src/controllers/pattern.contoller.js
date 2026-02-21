@@ -3,45 +3,45 @@ import {
   getUniquePatterns,
   getUniquePatternsWithIncompleteSizes,
 } from '../services/pattern.service.js';
-import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getPatterns, updatePatternByNumber } from '../services/pattern.service.js';
+import { ApiResponse } from '../utils/apiResponse.js';
 const syncPatternsFromSheet = asyncHandler(async (req, res) => {
   const { patterns } = req.body;
 
   if (!patterns || !patterns.length) {
-    return res.status(400).json(new ApiResponse('No data provided', null, 400));
+    return res.status(400).json(new ApiResponse(400, null, 'No data provided'));
   }
 
   const result = await bulkSyncPatterns(patterns);
 
   res.status(200).json(
     new ApiResponse(
-      'Patterns synced successfully',
+      200,
       {
         matchedCount: result.matchedCount,
         insertedCount: result.upsertedCount,
       },
-      200
+      'Patterns synced successfully'
     )
   );
 });
 
 const fetchPatterns = asyncHandler(async (req, res) => {
   const result = await getPatterns(req.query);
-  res.status(200).json(new ApiResponse('Patterns fetched successfully', result, 200));
+  res.status(200).json(new ApiResponse(200, result, 'Patterns fetched successfully'));
 });
 
 const uniquePatterns = asyncHandler(async (req, res) => {
   const result = await getUniquePatterns(req.query);
-  res.status(200).json(new ApiResponse('Unique Patterns fetched successfully', result, 200));
+  res.status(200).json(new ApiResponse(200, result, 'Unique Patterns fetched successfully'));
 });
 
 const notCompletedPatterns = asyncHandler(async (req, res) => {
   const result = await getUniquePatternsWithIncompleteSizes(req.query);
   res
     .status(200)
-    .json(new ApiResponse('Not completed Patterns list fetched successfully', result, 200));
+    .json(new ApiResponse(200, result, 'Not completed Patterns list fetched successfully'));
 });
 
 const updatePatternSizes = asyncHandler(async (req, res) => {
@@ -50,7 +50,7 @@ const updatePatternSizes = asyncHandler(async (req, res) => {
 
   const updatedPattern = await updatePatternByNumber(pattern_number, sizes);
 
-  res.status(200).json(new ApiResponse('Pattern sizes updated successfully', updatedPattern, 200));
+  res.status(200).json(new ApiResponse(200, updatedPattern, 'Pattern sizes updated successfully'));
 });
 
 export {

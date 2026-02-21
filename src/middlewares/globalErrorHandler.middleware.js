@@ -6,12 +6,12 @@ const globalErrorHandler = (err, req, res, next) => {
 
   // MongoDB Cast Error
   if (err.name === 'CastError') {
-    err = new ApiError('Invalid ID format', 400);
+    err = new ApiError(400, 'Invalid ID format');
   }
 
   // Duplicate Key Error
   if (err.code === 11000) {
-    err = new ApiError('Duplicate field value entered', 400);
+    err = new ApiError(400, 'Duplicate field value entered');
   }
 
   // Validation Error
@@ -19,7 +19,7 @@ const globalErrorHandler = (err, req, res, next) => {
     const message = Object.values(err.errors)
       .map((val) => val.message)
       .join(', ');
-    err = new ApiError(message, 400);
+    err = new ApiError(400, message);
   }
 
   res.status(err.statusCode).json({

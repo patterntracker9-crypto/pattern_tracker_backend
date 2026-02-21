@@ -5,11 +5,11 @@ import { generateAccessAndRefreshToken } from '../utils/token.js';
 
 const register = async ({ username, password }) => {
   if (!username || !password) {
-    throw new ApiError('All fields are required', 400);
+    throw new ApiError(400, 'All fields are required');
   }
   const isUserExists = await User.findOne({ username });
   if (isUserExists) {
-    throw new ApiError('User already exists', 400);
+    throw new ApiError(400, 'User already exists');
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
@@ -22,20 +22,20 @@ const register = async ({ username, password }) => {
 
 const login = async ({ username, password }) => {
   if (!username || !password) {
-    throw new ApiError('All fields are required', 400);
+    throw new ApiError(400, 'All fields are required');
   }
 
   // PASSWORD ko select karo
   const user = await User.findOne({ username }).select('+password');
 
   if (!user) {
-    throw new ApiError('Invalid Credentials', 400);
+    throw new ApiError(400, 'Invalid Credentials');
   }
 
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
   if (!isPasswordCorrect) {
-    throw new ApiError('Invalid Credentials', 400);
+    throw new ApiError(400, 'Invalid Credentials');
   }
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id, user.role);

@@ -1,23 +1,21 @@
 import express from 'express';
 import {
-  deleteUserById,
-  getProfile,
-  getUsersList,
+  registerUser,
   loginUser,
   logoutUser,
-  registerUser,
-  update,
+  refreshAccessToken,
 } from '../controllers/auth.controller.js';
-import { verifyJWT } from '../middlewares/verifyJWT.js';
-import { authorizedRoles } from '../middlewares/roleBaseAccess.middleware.js';
+
+import authMiddleware from '../middlewares/auth.middleware.js';
+
 const router = express.Router();
 
-router.post('/users/register', registerUser);
-router.post('/users/login', loginUser);
-router.post('/users/logout', verifyJWT, logoutUser);
-router.get('/users/profile', verifyJWT, getProfile);
-router.get('/users/list', verifyJWT, authorizedRoles('admin'), getUsersList);
-router.delete('/users/delete/:user_id', verifyJWT, authorizedRoles('admin'), deleteUserById);
-router.put('/users/update/:user_id', verifyJWT, authorizedRoles('admin'), update);
+// ---------- Public Routes ----------
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+router.post('/refresh-token', refreshAccessToken);
+
+// ---------- Protected Routes ----------
+router.post('/logout', authMiddleware, logoutUser);
 
 export default router;

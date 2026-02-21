@@ -1,5 +1,6 @@
 import mongoose, { Types } from 'mongoose';
 import { Pattern } from '../models/pattern.model.js';
+import { ApiError } from '../utils/ApiError.js';
 
 const bulkSyncPatterns = async (patternsData) => {
   if (!Array.isArray(patternsData)) {
@@ -67,11 +68,11 @@ const updatePatternByNumber = async (pattern_number, sizesToUpdate) => {
   const patterns = await Pattern.find({ pattern_number });
 
   if (!patterns || patterns.length === 0) {
-    throw new ApiError('Pattern not found', 404);
+    throw new ApiError(404, 'Pattern not found');
   }
 
   if (!Array.isArray(sizesToUpdate) || !sizesToUpdate.length) {
-    throw new ApiError('No sizes provided to update', 400);
+    throw new ApiError(400, 'No sizes provided to update');
   }
 
   // Create bulk update operations
@@ -140,7 +141,7 @@ const getUniquePatterns = async (query) => {
 
     // sorting
     {
-      $sort: { style_number: 1, pattern_number: 1 },
+      $sort: { style_number: -1, pattern_number: -1 },
     },
 
     // pagination
@@ -216,7 +217,7 @@ const getUniquePatternsWithIncompleteSizes = async (query) => {
 
     // sorting
     {
-      $sort: { style_number: 1, pattern_number: 1 },
+      $sort: { style_number: -1, pattern_number: -1 },
     },
   ];
 

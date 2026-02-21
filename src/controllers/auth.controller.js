@@ -1,93 +1,164 @@
-import {
-  allUsers,
-  deleteUser,
-  login,
-  logout,
-  profile,
-  register,
-  updateUser,
-} from '../services/auth.service.js';
-import { ApiError } from '../utils/ApiError.js';
-import { ApiResponse } from '../utils/ApiResponse.js';
+import { User } from '../models/user.model.js';
+import { ApiResponse } from '../utils/apiResponse.js';
+import { ApiError } from '../utils/apiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-const registerUser = asyncHandler(async (req, res) => {
-  const { username, password } = req.body;
-  const { createdUser } = await register({ username, password });
-  return res.status(201).json(new ApiResponse('User registered Successfully', createdUser, 201));
-});
 
-const loginUser = asyncHandler(async (req, res) => {
-  const { username, password } = req.body;
+// -----------------------------------------------
+// REGISTER CONTROLLER
+// -----------------------------------------------
+export const registerUser = asyncHandler(async (req, res) => {
+  const { username, employee_id, password } = req.body;
 
-  const { accessToken, refreshToken, user } = await login({
-    username,
-    password,
+  console.log('📝 Registration attempt:', { username, employee_id });
+
+  // 1. Validation
+  if (!username || !employee_id || !password) {
+    throw new ApiError(400, 'All fields are required');
+  }
+
+  if (password.length < 6) {
+    throw new ApiError(400, 'Password must be at least 6 characters');
+  }
+
+  // 2. Convert employee_id to number
+  const empId = Number(employee_id);
+  if (isNaN(empId)) {
+    throw new ApiError(400, 'Employee ID must be a number');
+  }
+
+  // 3. Check if user already exists
+  const existingUser = await User.findOne({
+    $or: [{ username: username.toLowerCase().trim() }, { employee_id: empId }],
   });
 
-  const cookieOptions = {
-    httpOnly: true,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
-    // maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  };
+  if (existingUser) {
+    if (existingUser.username === username.toLowerCase().trim()) {
+      throw new ApiError(409, 'Username already exists');
+    }
+    throw new ApiError(409, 'Employee ID already exists');
+  }
 
-  // Set Cookies
-  res.cookie('accessToken', accessToken, cookieOptions);
-  res.cookie('refreshToken', refreshToken, cookieOptions);
+  // 4. ✅ HASH PASSWORD MANUALLY (NO PRE-SAVE HOOK)
+  const bcrypt = await import('bcrypt');
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-  return res.status(200).json(
+  // 5. Create user with already hashed password
+  const user = await User.create({
+    username: username.toLowerCase().trim(),
+    employee_id: empId,
+    password: hashedPassword,
+  });
+
+  console.log('✅ User created successfully:', user._id);
+
+  // 6. Return response (toJSON will remove password)
+  return res.status(201).json(
     new ApiResponse(
-      'User logged in successfully.',
-      {
-        user,
-      },
-      200
+      201,
+      user, // toJSON() called automatically
+      'User registered successfully'
     )
   );
 });
+// -----------------------------------------------
+// LOGIN CONTROLLER
+// -----------------------------------------------
+export const loginUser = asyncHandler(async (req, res) => {
+  const { employee_id, password } = req.body;
 
-const logoutUser = asyncHandler(async (req, res) => {
-  const response = await logout(req.user?._id);
-  if (!response) {
-    throw new ApiError('Not authorized', 401);
+  if (!employee_id || !password) {
+    throw new ApiError(400, 'Employee ID and password are required');
   }
-  const cookieOptions = {
-    httpOnly: true,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
-    // maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  };
-  res.clearCookie('accessToken', cookieOptions);
-  res.clearCookie('refreshToken', cookieOptions);
-  return res.status(200).json(new ApiResponse('User logout success', null, 200));
-});
 
-const getProfile = asyncHandler(async (req, res) => {
-  const { user } = await profile(req.user?._id);
+  const user = await User.findOne({ employee_id });
+
   if (!user) {
-    throw new ApiError('Not authorized', 401);
+    throw new ApiError(404, 'User not found');
   }
-  return res.status(200).json(new ApiResponse('Profile fetched successfully', user, 200));
-});
 
-const getUsersList = asyncHandler(async (req, res) => {
-  const { users } = await allUsers();
-  return res.status(200).json(new ApiResponse('User list fetched successfully.', users, 200));
-});
-
-const update = asyncHandler(async (req, res) => {
-  const { user_id } = req.params;
-  const { role } = req.body;
-  const { updatedUser } = await updateUser(user_id, role);
-  return res.status(203).json(new ApiResponse('User updated successfully', updatedUser, 203));
-});
-
-const deleteUserById = asyncHandler(async (req, res) => {
-  const { user_id } = req.params;
-  const response = await deleteUser(user_id);
-  if (!response) {
-    throw new ApiError('Unauthorized', 401);
+  // Compare password
+  const isMatch = await user.comparePassword(password);
+  if (!isMatch) {
+    throw new ApiError(401, 'Invalid credentials');
   }
-  return res.status(200).json(new ApiResponse('User deleted successfully', null, 200));
+
+  // Generate tokens
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
+
+  // Save refresh token in DB
+  user.refreshToken = refreshToken;
+  await user.save({ validateBeforeSave: false });
+
+  // Cookie options
+  const options = {
+    httpOnly: true,
+    secure: false, // true only in production with HTTPS
+    sameSite: 'lax',
+  };
+
+  return res
+    .status(200)
+    .cookie('accessToken', accessToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user: {
+            _id: user._id,
+            username: user.username,
+            employee_id: user.employee_id,
+          },
+          accessToken,
+          refreshToken,
+        },
+        'Login successful'
+      )
+    );
 });
-export { registerUser, loginUser, logoutUser, getProfile, update, getUsersList, deleteUserById };
+
+// -----------------------------------------------
+// LOGOUT CONTROLLER
+// -----------------------------------------------
+export const logoutUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  user.refreshToken = '';
+  await user.save({ validateBeforeSave: false });
+
+  return res.status(200).json(new ApiResponse(200, {}, 'Logout successful'));
+});
+
+// -----------------------------------------------
+// REFRESH TOKEN (GET NEW ACCESS TOKEN)
+// -----------------------------------------------
+export const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingToken = req.body.refreshToken || req.cookies.refreshToken;
+
+  if (!incomingToken) {
+    throw new ApiError(401, 'Refresh token missing');
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(incomingToken, process.env.REFRESH_TOKEN_SECRET);
+  } catch (error) {
+    throw new ApiError(401, 'Invalid refresh token');
+  }
+
+  const user = await User.findById(decoded._id);
+
+  if (!user || user.refreshToken !== incomingToken) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const newAccessToken = user.generateAccessToken();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { accessToken: newAccessToken }, 'Access token refreshed'));
+});
