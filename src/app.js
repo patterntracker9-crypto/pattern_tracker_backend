@@ -4,6 +4,8 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes.js';
 import patternRoutes from '../src/routes/pattern.routes.js';
 import productRoutes from './routes/product.route.js';
+import catalogueRoutes from './routes/catalogue.routes.js';
+import jobsRoutes from './routes/jobIds.routes.js';
 import cors from 'cors';
 import { globalErrorHandler } from './middlewares/globalErrorHandler.middleware.js';
 
@@ -15,8 +17,7 @@ const corsOptions = {
       'https://patterntracker.netlify.app',
       'http://localhost:5173',
       'http://localhost:5174',
-      'https://productfinderdashboard.netlify.app',
-      'https://whatisproduct.netlify.app',
+      'https://cataloguetracker.netlify.app',
       '*',
       // For local development
     ];
@@ -57,10 +58,9 @@ app.use(cookieParser());
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/pattern', patternRoutes);
 app.use('/api/v1/products', productRoutes);
+app.use('/api/v1/catalogue', catalogueRoutes);
+app.use('/api/v1/jobs', jobsRoutes);
 
 app.use(globalErrorHandler);
 
 export { app };
-
-
-
