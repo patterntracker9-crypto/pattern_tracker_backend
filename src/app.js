@@ -18,7 +18,7 @@ const corsOptions = {
       'http://localhost:5173',
       'http://localhost:5174',
       'https://cataloguetracker.netlify.app',
-       'https://productfinderdashboard.netlify.app',
+      'https://productfinderdashboard.netlify.app',
       'https://whatisproduct.netlify.app',
       '*',
       // For local development
@@ -66,4 +66,3 @@ app.use('/api/v1/jobs', jobsRoutes);
 app.use(globalErrorHandler);
 
 export { app };
-

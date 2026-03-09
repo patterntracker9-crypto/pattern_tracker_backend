@@ -3,8 +3,8 @@ import express from 'express';
 import authMiddleware from '../middlewares/auth.middleware.js';
 import {
   getAllProducts,
-  getMissingChannelListing,
   getSingleProduct,
+  missingStyles,
   upsertStyles,
 } from '../controllers/products.controller.js';
 
@@ -22,7 +22,10 @@ router.post('/bulk', upsertStyles);
 router.get('/', getAllProducts);
 
 // Get missing channel listing styles
-router.get('/missing', getMissingChannelListing);
+// router.get('/missing', getMissingChannelListing);
+
+// missing styles
+router.get('/missing', missingStyles);
 
 // -----------------------------------------
 // Get single product by styleNumber

@@ -2,6 +2,8 @@ import Style from '../models/product.model.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { fetchGoogleSheetData } from '../utils/googlesheet.js';
+import { Parser } from 'json2csv';
 
 export const upsertStyles = asyncHandler(async (req, res) => {
   const { records } = req.body;
@@ -340,6 +342,119 @@ export const getMissingChannelListing = asyncHandler(async (req, res) => {
         channelListing,
       },
       'Missing channel style fetched successfully'
+    )
+  );
+});
+
+export const missingStyles = asyncHandler(async (req, res) => {
+  const { export: exportType, channel, page = 1, search } = req.query;
+
+  const sheetData = await fetchGoogleSheetData();
+
+  let styleNumbers = sheetData.map((item) => Number(item.styleNumber));
+
+  // -----------------------
+  // Search Filter
+  // -----------------------
+
+  if (search) {
+    styleNumbers = styleNumbers.filter((num) => num.toString().includes(search));
+  }
+
+  const styles = await Style.find(
+    { styleNumber: { $in: styleNumbers } },
+    { styleNumber: 1, marketPlaceDetails: 1 }
+  ).sort({ styleNumbers: -1 });
+
+  const channels = ['Myntra', 'Nykaa', 'Ajio', 'Tatacliq', 'Shopify'];
+
+  const dbMap = new Map();
+  styles.forEach((style) => {
+    dbMap.set(style.styleNumber, style.marketPlaceDetails);
+  });
+
+  const report = [];
+
+  for (const styleNumber of styleNumbers) {
+    const marketPlaces = dbMap.get(styleNumber) || [];
+
+    const row = {
+      styleNumber,
+      myntra: false,
+      nykaa: false,
+      ajio: false,
+      tatacliq: false,
+      shopify: false,
+    };
+
+    channels.forEach((ch) => {
+      const exists = marketPlaces.some((mp) => mp.channel.toLowerCase() === ch.toLowerCase());
+
+      row[ch.toLowerCase()] = exists;
+    });
+
+    report.push(row);
+  }
+
+  // -----------------------
+  // Channel wise filter
+  // -----------------------
+
+  let filteredReport = report.sort((a, b) => b.styleNumber - a.styleNumber);
+
+  if (channel) {
+    filteredReport = report.filter((item) => item[channel.toLowerCase()] === false);
+  }
+
+  // -----------------------
+  // CSV Export (Full Data)
+  // -----------------------
+
+  if (exportType === 'csv') {
+    let csvData = filteredReport;
+
+    // agar specific channel export ho
+    if (channel) {
+      csvData = filteredReport.map((item) => ({
+        styleNumber: item.styleNumber,
+        [channel.toLowerCase()]: item[channel.toLowerCase()],
+      }));
+    }
+
+    const parser = new Parser();
+    const csv = parser.parse(csvData);
+
+    res.header('Content-Type', 'text/csv');
+
+    if (channel) {
+      res.attachment(`${channel}-missing-styles.csv`);
+    } else {
+      res.attachment('missing-styles-report.csv');
+    }
+
+    return res.send(csv);
+  }
+
+  // -----------------------
+  // Pagination (UI Only)
+  // -----------------------
+
+  const limit = 50;
+  const start = (page - 1) * limit;
+  const end = start + limit;
+
+  const paginatedData = filteredReport.slice(start, end);
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        totalRecords: filteredReport.length,
+        currentPage: Number(page),
+        totalPages: Math.ceil(filteredReport.length / limit),
+        data: paginatedData,
+      },
+      'Missing Report fetched successfully'
     )
   );
 });
