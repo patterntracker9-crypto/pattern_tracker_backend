@@ -22,6 +22,8 @@ const corsOptions = {
       'https://whatisproduct.netlify.app',
       'https://staging-product-finder.qurvii.com',
       'https://product-finder.qurvii.com',
+      'https://staging-pattern-tracker.qurvii.com',
+      'https://pattern-tracker.qurvii.com,
       
       '*',
       // For local development
