@@ -20,6 +20,9 @@ const corsOptions = {
       'https://cataloguetracker.netlify.app',
       'https://productfinderdashboard.netlify.app',
       'https://whatisproduct.netlify.app',
+      'https://staging-product-finder.qurvii.com',
+      'https://product-finder.qurvii.com',
+      
       '*',
       // For local development
     ];
